@@ -60,6 +60,10 @@ const refLayer=viewer.imageryLayers.addImageryProvider(new C.UrlTemplateImageryP
 let radarLayer=null;
 cam.setView({destination:C.Cartesian3.fromDegrees(-40,28,22000000)});
 const ssc=scene.screenSpaceCameraController;ssc.minimumZoomDistance=30;
+scene.canvas.addEventListener('wheel',e=>{if(e.ctrlKey||e.deltaMode!==0||Math.abs(e.deltaY)>=100&&e.deltaX===0)return;e.preventDefault();e.stopPropagation();
+  const h=camH();if(h>1500000){const a=h/6.4e6*0.0006;cam.rotateRight(e.deltaX*a);cam.rotateUp(e.deltaY*a);return}
+  const up=C.Ellipsoid.WGS84.geodeticSurfaceNormal(cam.positionWC,new C.Cartesian3()),right=cam.rightWC,fwd=C.Cartesian3.cross(up,right,new C.Cartesian3());C.Cartesian3.normalize(fwd,fwd);
+  const k=h*0.0025;cam.move(right,e.deltaX*k);cam.move(fwd,-e.deltaY*k)},{passive:false,capture:true});
 scene.canvas.addEventListener('wheel',e=>{if(!e.ctrlKey)return;e.preventDefault();e.stopPropagation();const h=camH(),d=Math.max(-0.3,Math.min(0.3,e.deltaY*0.01));if(d<0)cam.zoomIn(h*-d);else cam.zoomOut(h*d)},{passive:false,capture:true});
 document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:false});
 function zoomBy(f){const h=camH();const d=f<1?h*(1-f):h*(f-1);if(f<1)cam.zoomIn(d);else cam.zoomOut(d)}
