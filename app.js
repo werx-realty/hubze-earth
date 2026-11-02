@@ -143,6 +143,7 @@ const windyCache={};
 const loaders={
  async flights(){
   const h=camH(),c=viewCenter();
+  if(h>1500000){setBillboards('flights',[]);return null}
   const j=await getJSON(h>1500000?'/api/flights?global=1':`/api/flights?lat=${c.lat.toFixed(2)}&lon=${c.lon.toFixed(2)}&dist=250`,{},30000);
   let rows;
   if(j.states)rows=j.states.filter(s=>s[5]!=null&&s[6]!=null).map(s=>({lon:s[5],lat:s[6],ground:!!s[8],altm:s[7]??s[13]??0,p:{id:s[0],cs:(s[1]||s[0]).trim(),country:s[2],alt:Math.round((s[7]??s[13]??0)*3.281),spd:Math.round((s[9]||0)*1.944),trk:s[10]||0,ground:!!s[8],src:'OpenSky'}}));
