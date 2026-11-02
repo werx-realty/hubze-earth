@@ -221,7 +221,7 @@ let mvT;cam.moveEnd.addEventListener(()=>{if(spinning)return;clearTimeout(mvT);m
 const handler=new C.ScreenSpaceEventHandler(scene.canvas);
 handler.setInputAction(e=>{
   if(placing){const p=pickGround(e.position);if(p)placeCam(p);return}
-  const picks=scene.drillPick(e.position,8);const hit=picks.map(x=>x.id).find(id=>id&&id.layer);
+  const pk=scene.pick(e.position);const hit=pk&&pk.id&&pk.id.layer?pk.id:null;
   if(!hit)return;
   if(hit.layer==='cams')openCam(hit.p,[hit.lon,hit.lat]);else showInfo(hit.layer,hit.p);
 },C.ScreenSpaceEventType.LEFT_CLICK);
@@ -276,6 +276,7 @@ function openCam(p,coords){
   const el=document.createElement('div');el.className='cam-anchor';el.innerHTML=camHTML(p,coords)+'<div class="cam-stem"></div><div class="cam-dot"></div>';
   wire(el,p,coords);$('#overlay').appendChild(el);
   const base=C.Cartesian3.fromDegrees(coords[0],coords[1],0);camOpen={el,base,pos:base};
+  if(camH()<30000)return;
   const head=C.Math.toRadians(25),dist=700;
   cam.flyTo({destination:C.Cartesian3.fromDegrees(coords[0]-Math.sin(head)*dist/111000/Math.cos(coords[1]*D2R),coords[1]-Math.cos(head)*dist/111000,450),
     orientation:{heading:head,pitch:C.Math.toRadians(-30),roll:0},duration:3});
