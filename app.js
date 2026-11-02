@@ -106,14 +106,16 @@ const ringColl=scene.primitives.add(new C.BillboardCollection({scene}));
 const labelColl=scene.primitives.add(new C.LabelCollection({scene}));
 const NOD=Number.POSITIVE_INFINITY;
 const scaleBy=new C.NearFarScalar(1e3,1.0,2e7,0.45);
+const lastSig={};
 function setBillboards(id,items){
+  if(id==='cams'){const sig=items.length+':'+items.map(i=>i.p.id).join(',');if(lastSig.cams===sig)return;lastSig.cams=sig}
   const c=coll[id];c.removeAll();if(id==='cams'){ringColl.removeAll();labelColl.removeAll()}
   items.forEach(it=>{
     const b=c.add({position:C.Cartesian3.fromDegrees(it.lon,it.lat,it.h!=null?it.h:15),image:it.icon,scale:it.scale||1,rotation:it.rot||0,
       alignedAxis:it.rot!=null?C.Cartesian3.UNIT_Z:C.Cartesian3.ZERO,disableDepthTestDistance:NOD,scaleByDistance:it.sbd||scaleBy,
       id:{layer:id,p:it.p,lon:it.lon,lat:it.lat}});
     if(id==='cams'){ringColl.add({position:b.position,image:ICON.ring,disableDepthTestDistance:NOD,scaleByDistance:scaleBy,id:b.id});
-      labelColl.add({position:b.position,text:(it.p.name||'').slice(0,42),font:'600 12px Inter, sans-serif',fillColor:C.Color.fromCssColorString('#dbeafe'),outlineColor:C.Color.BLACK,outlineWidth:3,
+      if(labelColl.length<150)labelColl.add({position:b.position,text:(it.p.name||'').slice(0,42),font:'600 12px Inter, sans-serif',fillColor:C.Color.fromCssColorString('#dbeafe'),outlineColor:C.Color.BLACK,outlineWidth:3,
         style:C.LabelStyle.FILL_AND_OUTLINE,pixelOffset:new C.Cartesian2(0,30),disableDepthTestDistance:NOD,
         distanceDisplayCondition:new C.DistanceDisplayCondition(0,6000),showBackground:true,backgroundColor:C.Color.fromCssColorString('rgba(8,12,20,.7)')})}
   });
@@ -122,7 +124,7 @@ function setBillboards(id,items){
 scene.preRender.addEventListener(()=>{const near=on.cams&&camH()<300000;ringColl.show=near;if(!near)return;const k=(performance.now()%1600)/1600,cp=cam.positionWC,n=ringColl.length;for(let i=0;i<n;i++){const r=ringColl.get(i);if(!r.show||C.Cartesian3.distance(cp,r.position)>60000)continue;r.scale=0.5+k*1.1;r.color=C.Color.WHITE.withAlpha(1-k)}});
 function occlude(){
   const occ=new C.EllipsoidalOccluder(C.Ellipsoid.WGS84,cam.positionWC);
-  const test=c=>{for(let i=0;i<c.length;i++){const b=c.get(i);b.show=occ.isPointVisible(b.position)}};
+  const test=c=>{for(let i=0;i<c.length;i++){const b=c.get(i),v=occ.isPointVisible(b.position);if(b.show!==v)b.show=v}};
   Object.values(coll).forEach(test);test(ringColl);test(labelColl);
 }
 cam.percentageChanged=0.02;cam.changed.addEventListener(occlude);
