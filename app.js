@@ -47,7 +47,8 @@ C.Ion.defaultAccessToken='';
 const esri=new C.UrlTemplateImageryProvider({url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',maximumLevel:19,credit:'Imagery © Esri, Maxar, Earthstar Geographics'});
 const viewer=new C.Viewer('map',{baseLayer:new C.ImageryLayer(esri),baseLayerPicker:false,geocoder:false,homeButton:false,sceneModePicker:false,navigationHelpButton:false,
   animation:false,timeline:false,fullscreenButton:false,infoBox:false,selectionIndicator:false,terrainProvider:new C.EllipsoidTerrainProvider(),
-  requestRenderMode:false,msaaSamples:4});
+  requestRenderMode:false,msaaSamples:1});
+scene.postProcessStages.fxaa.enabled=true;
 window.viewer=viewer;
 const scene=viewer.scene,cam=viewer.camera,globe=scene.globe;
 viewer.clock.shouldAnimate=true;viewer.clock.currentTime=C.JulianDate.now();
@@ -65,7 +66,7 @@ let g3d=null;
 async function loadGoogle(){
   if(g3d||!keys.google)return;
   try{C.GoogleMaps.defaultApiKey=keys.google;
-    g3d=await C.createGooglePhotorealistic3DTileset({key:keys.google,onlyUsingWithGoogleGeocoder:true},{maximumScreenSpaceError:12,skipLevelOfDetail:true});
+    g3d=await C.createGooglePhotorealistic3DTileset({key:keys.google,onlyUsingWithGoogleGeocoder:true},{maximumScreenSpaceError:16,skipLevelOfDetail:true,cacheBytes:512*1024*1024,maximumCacheOverflowBytes:256*1024*1024});
     scene.primitives.add(g3d);g3d.show=false;
   }catch(e){console.warn('google3d',e);hint('Google 3D failed to load — check the Google key in <a onclick="openSettings()">Settings</a>.')}
 }
@@ -103,17 +104,17 @@ const scaleBy=new C.NearFarScalar(1e3,1.0,2e7,0.45);
 function setBillboards(id,items){
   const c=coll[id];c.removeAll();if(id==='cams'){ringColl.removeAll();labelColl.removeAll()}
   items.forEach(it=>{
-    const b=c.add({position:C.Cartesian3.fromDegrees(it.lon,it.lat,it.h||0),image:it.icon,scale:it.scale||1,rotation:it.rot||0,
+    const b=c.add({position:C.Cartesian3.fromDegrees(it.lon,it.lat,it.h!=null?it.h:15),image:it.icon,scale:it.scale||1,rotation:it.rot||0,
       alignedAxis:it.rot!=null?C.Cartesian3.UNIT_Z:C.Cartesian3.ZERO,disableDepthTestDistance:NOD,scaleByDistance:it.sbd||scaleBy,
-      heightReference:it.h!=null?C.HeightReference.NONE:C.HeightReference.CLAMP_TO_GROUND,id:{layer:id,p:it.p,lon:it.lon,lat:it.lat}});
-    if(id==='cams'){ringColl.add({position:b.position,image:ICON.ring,disableDepthTestDistance:NOD,heightReference:C.HeightReference.CLAMP_TO_GROUND,scaleByDistance:scaleBy,id:b.id});
+      id:{layer:id,p:it.p,lon:it.lon,lat:it.lat}});
+    if(id==='cams'){ringColl.add({position:b.position,image:ICON.ring,disableDepthTestDistance:NOD,scaleByDistance:scaleBy,id:b.id});
       labelColl.add({position:b.position,text:(it.p.name||'').slice(0,42),font:'600 12px Inter, sans-serif',fillColor:C.Color.fromCssColorString('#dbeafe'),outlineColor:C.Color.BLACK,outlineWidth:3,
-        style:C.LabelStyle.FILL_AND_OUTLINE,pixelOffset:new C.Cartesian2(0,30),disableDepthTestDistance:NOD,heightReference:C.HeightReference.CLAMP_TO_GROUND,
+        style:C.LabelStyle.FILL_AND_OUTLINE,pixelOffset:new C.Cartesian2(0,30),disableDepthTestDistance:NOD,
         distanceDisplayCondition:new C.DistanceDisplayCondition(0,6000),showBackground:true,backgroundColor:C.Color.fromCssColorString('rgba(8,12,20,.7)')})}
   });
   occlude();
 }
-scene.preRender.addEventListener((s,t)=>{const k=(performance.now()%1600)/1600;const n=ringColl.length;for(let i=0;i<n;i++){const r=ringColl.get(i);r.scale=0.5+k*1.1;r.color=C.Color.WHITE.withAlpha(1-k)}});
+scene.preRender.addEventListener(()=>{const near=on.cams&&camH()<300000;ringColl.show=near;if(!near)return;const k=(performance.now()%1600)/1600,cp=cam.positionWC,n=ringColl.length;for(let i=0;i<n;i++){const r=ringColl.get(i);if(!r.show||C.Cartesian3.distance(cp,r.position)>60000)continue;r.scale=0.5+k*1.1;r.color=C.Color.WHITE.withAlpha(1-k)}});
 function occlude(){
   const occ=new C.EllipsoidalOccluder(C.Ellipsoid.WGS84,cam.positionWC);
   const test=c=>{for(let i=0;i<c.length;i++){const b=c.get(i);b.show=occ.isPointVisible(b.position)}};
@@ -334,4 +335,4 @@ setInterval(()=>{const h=camH();$('#zm').textContent=h>10000?Math.round(h/1000).
 applyVis();
 ['cams','flights','fires','ships','quakes','events','iss','radar'].forEach(refresh);
 setInterval(()=>refresh('iss'),5000);setInterval(()=>refresh('radar'),10*60000);setInterval(()=>refresh('events'),30*60000);
-setInterval(()=>refresh('flights'),20000);setInterval(()=>refresh('ships'),60000);setInterval(()=>refresh('fires'),15*60000);setInterval(()=>refresh('quakes'),5*60000);
+setInterval(()=>refresh('flights'),camH()>1500000?60000:20000);setInterval(()=>refresh('ships'),60000);setInterval(()=>refresh('fires'),15*60000);setInterval(()=>refresh('quakes'),5*60000);
