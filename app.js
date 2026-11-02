@@ -48,7 +48,7 @@ const esri=new C.UrlTemplateImageryProvider({url:'https://server.arcgisonline.co
 const viewer=new C.Viewer('map',{baseLayer:new C.ImageryLayer(esri),baseLayerPicker:false,geocoder:false,homeButton:false,sceneModePicker:false,navigationHelpButton:false,
   animation:false,timeline:false,fullscreenButton:false,infoBox:false,selectionIndicator:false,terrainProvider:new C.EllipsoidTerrainProvider(),
   requestRenderMode:false,msaaSamples:1});
-scene.postProcessStages.fxaa.enabled=true;
+viewer.scene.postProcessStages.fxaa.enabled=true;
 window.viewer=viewer;
 const scene=viewer.scene,cam=viewer.camera,globe=scene.globe;
 viewer.clock.shouldAnimate=true;viewer.clock.currentTime=C.JulianDate.now();
