@@ -59,7 +59,13 @@ applyTheme();
 const refLayer=viewer.imageryLayers.addImageryProvider(new C.UrlTemplateImageryProvider({url:'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',maximumLevel:19}));
 let radarLayer=null;
 cam.setView({destination:C.Cartesian3.fromDegrees(-40,28,22000000)});
-scene.screenSpaceCameraController.minimumZoomDistance=30;
+const ssc=scene.screenSpaceCameraController;ssc.minimumZoomDistance=30;
+ssc.zoomEventTypes=[C.CameraEventType.RIGHT_DRAG,C.CameraEventType.WHEEL,C.CameraEventType.PINCH,{eventType:C.CameraEventType.WHEEL,modifier:C.KeyboardEventModifier.CTRL}];
+ssc._zoomFactor=8;
+scene.canvas.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:false});
+function zoomBy(f){const h=camH();const d=f<1?h*(1-f):h*(f-1);if(f<1)cam.zoomIn(d);else cam.zoomOut(d)}
+(()=>{const z=document.createElement('div');z.id='zoomCtl';z.innerHTML='<button data-z="in" title="Zoom in">+</button><button data-z="out" title="Zoom out">−</button>';document.body.appendChild(z);
+  z.onclick=e=>{const b=e.target.closest('[data-z]');if(!b)return;markBusy();zoomBy(b.dataset.z==='in'?0.5:2)}})();
 
 /* Google photorealistic 3D */
 let g3d=null;
@@ -322,8 +328,9 @@ $('#search').onsubmit=async e=>{e.preventDefault();const q=$('#q').value.trim();
 $('#globeBtn').onclick=()=>{closeCam();const c=viewCenter();cam.flyTo({destination:C.Cartesian3.fromDegrees(c.lon,20,22000000),duration:3})};
 
 /* ---------- spin, clock ---------- */
-let userBusy=false,spinning=false;
-['LEFT_DOWN','WHEEL','RIGHT_DOWN','PINCH_START'].forEach(t=>handler.setInputAction(()=>{userBusy=true;clearTimeout(userBusy.t);userBusy.t=setTimeout(()=>userBusy=false,4000)},C.ScreenSpaceEventType[t]));
+let userBusy=false,spinning=false,busyT;
+function markBusy(){userBusy=true;clearTimeout(busyT);busyT=setTimeout(()=>userBusy=false,5000)}
+['pointerdown','wheel','touchstart','keydown'].forEach(ev=>scene.canvas.addEventListener(ev,markBusy,{passive:true}));
 let lastT=performance.now();
 scene.preRender.addEventListener(()=>{const now=performance.now(),dt=(now-lastT)/1000;lastT=now;
   spinning=on.spin&&!userBusy&&!camOpen&&camH()>5000000;if(spinning)cam.rotate(C.Cartesian3.UNIT_Z,-0.05*dt)});

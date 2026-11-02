@@ -128,6 +128,10 @@ html,body{height:100%;overflow:hidden;background:var(--space);font-family:Inter,
 .cesium-widget-credits{font-size:10px!important}
 .cesium-viewer .cesium-widget-credits{display:flex!important;align-items:center;gap:6px}
 #map .cesium-viewer{position:absolute;inset:0}
+#zoomCtl{position:fixed;right:278px;bottom:60px;z-index:6;display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;backdrop-filter:blur(10px)}
+#zoomCtl button{width:38px;height:38px;border:0;background:transparent;color:var(--text);font:600 20px Inter;cursor:pointer}
+#zoomCtl button+button{border-top:1px solid var(--line)}
+#zoomCtl button:hover{background:var(--accent);color:#fff}
 </style>
 </head>
 <body class="t-dark">
