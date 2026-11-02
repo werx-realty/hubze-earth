@@ -60,9 +60,6 @@ const refLayer=viewer.imageryLayers.addImageryProvider(new C.UrlTemplateImageryP
 let radarLayer=null;
 cam.setView({destination:C.Cartesian3.fromDegrees(-40,28,22000000)});
 const ssc=scene.screenSpaceCameraController;ssc.minimumZoomDistance=30;
-ssc.zoomEventTypes=[C.CameraEventType.RIGHT_DRAG,C.CameraEventType.WHEEL,C.CameraEventType.PINCH,{eventType:C.CameraEventType.WHEEL,modifier:C.KeyboardEventModifier.CTRL}];
-ssc._zoomFactor=8;
-scene.canvas.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:false});
 function zoomBy(f){const h=camH();const d=f<1?h*(1-f):h*(f-1);if(f<1)cam.zoomIn(d);else cam.zoomOut(d)}
 (()=>{const z=document.createElement('div');z.id='zoomCtl';z.innerHTML='<button data-z="in" title="Zoom in">+</button><button data-z="out" title="Zoom out">−</button>';document.body.appendChild(z);
   z.onclick=e=>{const b=e.target.closest('[data-z]');if(!b)return;markBusy();zoomBy(b.dataset.z==='in'?0.5:2)}})();
