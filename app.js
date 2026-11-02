@@ -222,7 +222,10 @@ async function refresh(id){
   catch(e){console.warn(id,e);setStatus(id+' feed unavailable, retrying')}
   finally{busy[id]=0}
 }
-let mvT;cam.moveEnd.addEventListener(()=>{if(spinning)return;clearTimeout(mvT);mvT=setTimeout(()=>{refresh('cams');if(camH()<1500000)refresh('flights')},600)});
+let leveling=false;
+function levelOut(){if(leveling||camOpen)return;const h=camH();if(h<250000||C.Math.toDegrees(cam.pitch)<-75)return;const c=viewCenter();leveling=true;
+  cam.flyTo({destination:C.Cartesian3.fromDegrees(c.lon,c.lat,Math.max(h,400000)),orientation:{heading:0,pitch:-C.Math.PI_OVER_TWO,roll:0},duration:0.8,complete:()=>leveling=false,cancel:()=>leveling=false})}
+let mvT;cam.moveEnd.addEventListener(()=>{if(spinning)return;levelOut();clearTimeout(mvT);mvT=setTimeout(()=>{refresh('cams');if(camH()<1500000)refresh('flights')},600)});
 
 /* ---------- picking ---------- */
 const handler=new C.ScreenSpaceEventHandler(scene.canvas);
